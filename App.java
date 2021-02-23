@@ -18,6 +18,8 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
         // Create top-level object, set up the scene, and show the stage here.
+        VBox root = new VBox();
+        stage.show();
     }
 
     /*
