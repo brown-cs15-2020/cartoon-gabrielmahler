@@ -2,6 +2,7 @@ package cartoon;
 
 import javafx.application.Application;
 import javafx.stage.Stage;
+import javafx.scene.Scene;
 
 /**
  * Here's cartoon! Your first JavaFX assignment!
@@ -16,10 +17,16 @@ import javafx.stage.Stage;
 public class App extends Application {
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage primaryStage) {
         // Create top-level object, set up the scene, and show the stage here.
-        VBox root = new VBox();
-        stage.show();
+        PaneOrganizer organizer  = new PaneOrganizer();
+        Scene scene = new Scene(organizer.getRoot());
+        primaryStage.setScene(scene);
+        primaryStage.setWidth(1000);
+        primaryStage.setHeight(600);
+        primaryStage.setTitle("Cartoon");
+        primaryStage.show();
+
     }
 
     /*
