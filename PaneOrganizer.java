@@ -58,8 +58,8 @@ public class PaneOrganizer {
         _root.setTop(rectsPane);
         _player = new Player(playerPane);
         rectsPane.getChildren().addAll(playerPane);
-        _fallingObject = new FallingObject(junkPane);
-//        _meteorite = new Meteorite(meteoritePane);
+//        _fallingObject = new FallingObject(junkPane);
+        _meteorite = new Meteorite(meteoritePane);
         rectsPane.getChildren().addAll(junkPane, meteoritePane);
     }
 
@@ -121,7 +121,7 @@ public class PaneOrganizer {
                     if (Math.random() > 0.5){
                         meteoriteOrJunk = 1;
                     }
-                    switch (meteoriteOrJunk){
+                    switch (meteoriteOrJunk){ // randomly creating either meteorite or fallingobject
                         case 0:
                             _fallingObject = new FallingObject(junkPane);
 //                            rectsPane.getChildren().add(junkPane);
