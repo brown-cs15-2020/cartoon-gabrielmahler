@@ -12,31 +12,35 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.animation.Timeline;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.util.Duration;
-import javafx.geometry.Bounds;
-
+import sun.lwawt.macosx.CSystemTray;
 
 
 public class PaneOrganizer {
-    //TODO: use this class to set up your panes, your quit button, and to create an instance of your top-level logic class!
     public BorderPane _root;
     public Pane rectsPane;
+    public Pane playerPane;
+    public Pane meteoritePane;
+    public Pane junkPane;
+    public Pane finishPane;
 
     public FallingObject _fallingObject;
+    public Meteorite _meteorite;
     private Label _score;
     public Integer scoreValue = 0;
+
     public Player _player;
 
     public PaneOrganizer() {
         _root = new BorderPane();
-        _root.setStyle("-fx-background-color: orange;");
+        _root.setStyle("-fx-background-color: gray;");
         this.createRectsPane();
         this.createScore();
-        this.setupTimeline();
+        this.setupTimeline(true);
         rectsPane.addEventHandler(KeyEvent.KEY_PRESSED, new KeyHandler());
         rectsPane.setFocusTraversable(true);
-
-
     }
 
     public BorderPane getRoot() {
@@ -44,14 +48,19 @@ public class PaneOrganizer {
     }
 
     public void createRectsPane() {
+        playerPane = new Pane();
         rectsPane = new Pane();
+        meteoritePane = new Pane();
+        junkPane = new Pane();
         rectsPane.setPrefSize(cartoon.Constants.RECT_PANE_WIDTH, Constants.RECT_PANE_HEIGHT);
         rectsPane.setStyle("-fx-background-color: black");
+        this.createStarBackGround(rectsPane);
         _root.setTop(rectsPane);
-        _player = new Player(rectsPane);
-        _fallingObject = new FallingObject();
-        rectsPane.getChildren().addAll(_fallingObject.getFallingObjectNode());
-        rectsPane.getChildren().addAll(_player.getPlayerNode());
+        _player = new Player(playerPane);
+        rectsPane.getChildren().addAll(playerPane);
+        _fallingObject = new FallingObject(junkPane);
+//        _meteorite = new Meteorite(meteoritePane);
+        rectsPane.getChildren().addAll(junkPane, meteoritePane);
     }
 
     public void createScore() {
@@ -63,38 +72,71 @@ public class PaneOrganizer {
     }
 
 
-    public void setupTimeline() {
+    public void setupTimeline(boolean OnOrOff) {
         KeyFrame kf = new KeyFrame(Duration.millis(20), new TimeHandler());
         Timeline timeline = new Timeline(kf);
         timeline.setCycleCount(Animation.INDEFINITE);
-        timeline.play();
+        if (OnOrOff) {
+            timeline.play();
+        }
+        else{
+            timeline.stop();
+        }
     }
 
     private class TimeHandler implements EventHandler<ActionEvent> {
         public void handle(ActionEvent event) {
-            boolean isInGame = _fallingObject.checkOnPlane();
-            boolean collisionDetection = collisionDetector();
-            if (collisionDetection) {
-                Platform.exit();
-            } else {
+            boolean isInGame = false;
+            if (_meteorite == null){
+                isInGame = _fallingObject.checkFallingOnPlane();
+                }
+            else if (_fallingObject == null) {
+                isInGame = _meteorite.checkMeteoriteOnPlane();
+            }
+
+
+            if (collisionDetector()) {
+                setupTimeline(false);
+                finishPane = new Pane();
+                FinishScreen finish = new FinishScreen(finishPane, scoreValue);
+                rectsPane.getChildren().addAll(finishPane);
+            }
+            else {
                 if (isInGame) {
-                    _fallingObject.moveFallObject();
-                } else {
-                    rectsPane.getChildren().remove(_fallingObject);
-                    _fallingObject = new FallingObject();
-                    rectsPane.getChildren().addAll(_fallingObject.getFallingObjectNode());
+                    if (_fallingObject == null){
+                        _meteorite.moveMeteorite(scoreValue);
+                    }
+                    else if (_meteorite == null) {
+                        _fallingObject.moveFallObject(scoreValue);
+                    }
+                }
+                else if(isInGame == false) {
+////                    if (_meteorite == null){
+//                        rectsPane.getChildren().remove(junkPane);
+//                    }
+////                    if (_fallingObject == null) {
+//                        rectsPane.getChildren().remove(meteoritePane);
+//                        }
+                    int meteoriteOrJunk = 0;
+                    if (Math.random() > 0.5){
+                        meteoriteOrJunk = 1;
+                    }
+                    switch (meteoriteOrJunk){
+                        case 0:
+                            _fallingObject = new FallingObject(junkPane);
+//                            rectsPane.getChildren().add(junkPane);
+                            System.out.println("Falling object");
+                            break;
+                        case 1:
+                            _meteorite = new Meteorite(meteoritePane);
+//                            rectsPane.getChildren().add(meteoritePane);
+                            System.out.println("meteorite");
+                            break;
+                    }
+
                 }
                 scoreValue += 1;
                 _score.setText("Score: " + scoreValue.toString());
-
-
-//            for (Node object : rectsPane.getChildren()) {
-//                if (object instanceof FallingObject){
-//
-//                }
-//            }
-
-
             }
         }
     }
@@ -115,12 +157,33 @@ public class PaneOrganizer {
         }
 
         public boolean collisionDetector() {
-            return (_player._playerBody.intersects(_fallingObject._object.getBoundsInLocal()));
-
+            boolean collision = false;
+            if (_meteorite == null){
+                if (_fallingObject._object.getBoundsInParent().intersects(_player._playerBody.getBoundsInParent())){
+                    collision = true;
+                }
+            }
+            else if (_fallingObject == null) {
+                if (_meteorite._objectMeteorite.getBoundsInLocal().intersects(_player._playerBody.getBoundsInParent())){
+                    collision = true;
+                }
+            }
+            return collision;
         }
 
-        public void stopAnimation() {
-
+        public void createStarBackGround(Pane rectsPane){
+            Circle star;
+            double yStar;
+            double xStar;
+            Color starColor = Color.rgb(247,245,172);
+            for (int i = 0; i < 400; i+=1){
+                star = new Circle(3, starColor);
+                yStar = (int)(Math.random()*550);
+                xStar = (int)(Math.random()*1000);
+                star.setCenterX(xStar);
+                star.setCenterY(yStar);
+                rectsPane.getChildren().addAll(star);
+            }
         }
     }
 
